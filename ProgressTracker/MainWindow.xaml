@@ -1,0 +1,61 @@
+﻿<Window x:Class="ProgressTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-comc:\users\codyk\source\repos\progresstracker\progresstracker\mainwindow.xaml.cs
+c:\users\codyk\source\repos\progresstracker\progresstracker\mainwindow.xaml
+patibility/2006"
+        xmlns:controls="clr-namespace:ProgressTracker.View.Controls"
+        xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Calendar 
+                SelectedDate="{Binding CalendarDate, UpdateSourceTrigger=PropertyChanged}"
+                Name="NoteCalendar"
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Top"/>
+            <ListBox ItemsSource="{Binding Notes}" Name="NotesLis" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="2">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <controls:NotesControl
+                            Command="{Binding DataContext.OpenNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Orientation="Horizontal" Grid.Row="1">
+                <Button Content="Select Date" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Command="{Binding CalendarSelectCommand}"/>
+                <Button Content="Remove Date" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,0,0,0"
+                        Command="{Binding RemoveCommand}"/>
+            </StackPanel>
+
+        </Grid>
+
+
+        <ListBox ItemsSource="{Binding MainItems}" Grid.Column="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <controls:MainItemControl/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+
+
+    </Grid>
+        
+       
+
+</Window>
