@@ -6,10 +6,12 @@
              xmlns:local="clr-namespace:ProgressTracker.View.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    
-    
+
+
     <StackPanel Orientation="Horizontal" Margin="5">
-        <TextBlock Text="{Binding Text}" Width="150"/>
-        <TextBlock Text="{Binding Search}" Width="300"/>
+        <TextBlock Text="{Binding Text}" Width="250" TextWrapping="Wrap" Padding="0,0,10,0"/>
+        <TextBlock Text="{Binding Search}" Width="200" TextWrapping="Wrap" Padding="0,0,10,0"/>
+        <local:LinkButton Text="{Binding Count}"
+                          Command="{Binding Command, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
     </StackPanel>
 </UserControl>

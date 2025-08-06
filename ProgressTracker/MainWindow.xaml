@@ -26,31 +26,54 @@ patibility/2006"
                 Name="NoteCalendar"
                 HorizontalAlignment="Left" 
                 VerticalAlignment="Top"/>
-            <ListBox ItemsSource="{Binding Notes}" Name="NotesLis" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="2">
+            <ListBox ItemsSource="{Binding Notes}"
+                     x:Name="NotesList" 
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch" 
+                     Grid.Row="2"
+                     SelectionMode="Extended"
+                     SelectionChanged="NoteListBox_SelectionChanged">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <controls:NotesControl
-                            Command="{Binding DataContext.OpenNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            Command="{Binding DataContext.OpenNoteWindowCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
             <StackPanel Orientation="Horizontal" Grid.Row="1">
-                <Button Content="Select Date" HorizontalAlignment="Left" VerticalAlignment="Top"
-                        Command="{Binding CalendarSelectCommand}"/>
-                <Button Content="Remove Date" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,0,0,0"
-                        Command="{Binding RemoveCommand}"/>
+                <Button Content="Add Note" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Command="{Binding SelectNoteCommand}"/>
+                <Button Content="Remove Note" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,0,0,0"
+                        Command="{Binding RemoveNoteCommand}"/>
             </StackPanel>
 
         </Grid>
 
 
-        <ListBox ItemsSource="{Binding MainItems}" Grid.Column="2">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <controls:MainItemControl/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <Grid Grid.Column="2">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <TextBlock Text="Description" Width="250"/>
+                <TextBlock Text="Search String" Width="200"/>
+                <TextBlock Text="Count" Width="100"/>
+            </StackPanel>
+            <ListBox ItemsSource="{Binding MainItems}" Grid.Row="2">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <controls:MainItemControl
+                            Command="{Binding DataContext.AddMatchedNotesCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            
+        </Grid>
+
+
 
 
 

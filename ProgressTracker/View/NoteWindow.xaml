@@ -12,7 +12,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <RichTextBox Name="NoteText"/>
+        <RichTextBox x:Name="NoteText"/>
         <Button Content="Save Note" Click="SaveButton_Click" Grid.Row="1"/>
     </Grid>
 </Window>

@@ -1,5 +1,6 @@
 ﻿using ProgressTracker.Model;
 using ProgressTracker.View;
+using ProgressTracker.MVVM;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,44 +9,62 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
-using static ProgressTracker.ViewModel.MainWindowViewModel;
+using System.Net.Quic;
+using Microsoft.Win32;
 
 
 namespace ProgressTracker.ViewModel
 {
-	public class MainWindowViewModel : INotifyPropertyChanged
+	public class MainWindowViewModel : MyNotifyPropertyChanged
 	{
+        public ICommand OpenNoteWindowCommand { get; }
+        public ICommand RemoveNoteCommand { get; }
+        public ICommand SelectNoteCommand { get; }
+        public ICommand AddMatchedNotesCommand { get; }
+
         public MainWindowViewModel()
         {
-            mainItems = new ObservableCollection<MainItem>
+            mainItems = new ObservableCollection<MainItemViewModel>
             {
-                new MainItem("Item 1", "Search 1"),
-                new MainItem("Item 2", "Search 2"),
-                new MainItem("Item 3", "Search 3")
+                new MainItemViewModel(new MainItem("Keep track of what I have debugged", "Debug")),
+                new MainItemViewModel(new MainItem("Keep track of resolved github issues", "Resolved Issue")),
+                new MainItemViewModel(new MainItem("Keep track of code reviews", "Review"))
             };
 
             noteManager = new NoteManager();
 
-            notes = new ObservableCollection<Note>{
-                new Note( "Note 1", "2023-10-01")
-            };
+            notes = new ObservableCollection<NoteViewModel> { };
 
-            CalendarSelectCommand = new RelayCommand(_ => SelectDate());
-            OpenNoteCommand = new RelayCommand(param =>
-            { 
-                if (param is Note note) 
+            SelectNoteCommand = new RelayCommand(_ => SelectDate());
+
+            OpenNoteWindowCommand = new RelayCommand(param =>
+            {
+                if (param is NoteViewModel noteViewModel)
                 {
-                    RequestOpenNote?.Invoke(note);
+                    RequestOpenNote?.Invoke(noteViewModel.Note);
+                }
+            });
+
+            RemoveNoteCommand = new RelayCommand(_ => RemoveDate());
+
+            AddMatchedNotesCommand = new RelayCommand(param =>
+            {
+                if (param is MainItemViewModel mainItemViewModel)
+                {
+                    AddMatchedNotes(mainItemViewModel);
                 }
             });
         }
+        
         public event Action<Note>? RequestOpenNote;
+        
 
         //==================================   Main Items
-        private ObservableCollection<MainItem> mainItems;
+        private ObservableCollection<MainItemViewModel> mainItems;
 		
-		public ObservableCollection<MainItem> MainItems
+		public ObservableCollection<MainItemViewModel> MainItems
 		{
 			get { return mainItems; }
 			set
@@ -57,9 +76,23 @@ namespace ProgressTracker.ViewModel
 
         // =================================     Notes
         private NoteManager noteManager;
-        private ObservableCollection<Note> notes;
-        public ICommand OpenNoteCommand { get; }
-        public ObservableCollection<Note> Notes
+        
+
+
+
+        private List<NoteViewModel> selectedNotes;
+        public List<NoteViewModel> SelectedNotes
+        {
+            get => selectedNotes;
+            set
+            {
+                selectedNotes = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<NoteViewModel> notes;
+        public ObservableCollection<NoteViewModel> Notes
 		{
 			get { return notes; }
             set 
@@ -67,15 +100,54 @@ namespace ProgressTracker.ViewModel
 			OnPropertyChanged();
             }
         }
-        public void OpenNote(Note param)
-        {
-            Note nn = new Note("new note", param.Date);
-            notes.Add(nn);
-            noteManager.GetContentByDate(param.Date);
+        //public void OpenNote(Note param)
+        //{
+        //    NoteViewModel nn = new NoteViewModel("new note", param.Date);
+        //    notes.Add(nn);
+        //    noteManager.GetContentByDate(param.Date);
 
+        //}
+
+        public void SelectDate()
+        {
+
+            if (calendarDate == null)
+            {
+                
+                return;
+            }
             
-            
-            
+
+            Note nn = new Note("", calendarDate.Value.ToString("yyyy-MM-dd"));
+            if (noteManager.CanAddNote(nn))
+            {
+                notes.Add(new NoteViewModel(nn));
+                noteManager.OnAddNote(nn);
+            }
+        }
+        public void AddMatchedNotes(MainItemViewModel mainItemViewModel)
+        {
+            foreach (string date in mainItemViewModel.MainItem.Matches)
+            {
+                Note n = noteManager.UpdateNote(date, mainItemViewModel.Search);
+                if(n != null)
+                {
+                    notes.Add(new NoteViewModel(n));
+                    noteManager.OnAddNote(n);
+                }
+            }
+        }
+
+        public void RemoveDate()
+        {
+            if (selectedNotes != null)
+            {
+                foreach (NoteViewModel noteViewModel in selectedNotes)
+                {
+                    notes.Remove(noteViewModel);
+                    noteManager.OnRemoveNote(noteViewModel.Note);
+                }
+            }
         }
 
 
@@ -86,8 +158,6 @@ namespace ProgressTracker.ViewModel
         //=====================================   Calendar
         private DateTime? calendarDate;
 
-        public ICommand CalendarSelectCommand { get; }
-
 
         public DateTime? CalendarDate
         {
@@ -97,56 +167,94 @@ namespace ProgressTracker.ViewModel
             }
         }
 
-        public void SelectDate()
+
+        //=================================  Matching
+        public void FindMatches(Note note, string searchText)
         {
-            if (calendarDate == null)
-            {
-                return;
-            }
+
             
-            Note nn = new Note("new note", calendarDate.Value.ToString("yyyy-MM-dd"));
-            notes.Add(nn);
-        }
-
-        //================================   Helper
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public class RelayCommand : ICommand
-        {
-            private readonly Action<object?> _execute;
-            private readonly Func<object?, bool>? _canExecute;
-
-            public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
+            foreach (MainItemViewModel itemViewModel in MainItems)
             {
-                _execute = execute;
-                _canExecute = canExecute;
-            }
 
-            public bool CanExecute(object? parameter) => _canExecute == null || _canExecute(parameter);
-            public void Execute(object? parameter) => _execute(parameter);
-            public event EventHandler? CanExecuteChanged
-            {
-                add { CommandManager.RequerySuggested += value; }
-                remove { CommandManager.RequerySuggested -= value; }
+                //TODO: Refactor this search logic to have it's own model class for improvements later.
+                if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(itemViewModel.Search))
+                {
+                    continue;
+                }
+                if(searchText.IndexOf(itemViewModel.Search, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    //TODO Fix if I remove something from a note.
+                    //TODO Save the counts somewhere in a file so no need to re-match when opening.
+
+                    if (!itemViewModel.Matches.Contains(note.Date))
+                    {
+                        itemViewModel.Matches.Add(note.Date);
+                        itemViewModel.Count++;
+                    }
+
+                    
+                }
+                
             }
+        }
+        
+    }
+
+    public class MainItemViewModel : MyNotifyPropertyChanged
+    {
+        private readonly MainItem _mainItem;
+        public string Text
+        {
+            get { return _mainItem.Text; }
+            set { _mainItem.Text = value;  OnPropertyChanged(); }
+        }
+        public string Search
+        {
+            get { return _mainItem.Search; }
+            set { _mainItem.Search = value; OnPropertyChanged(); }
+        }
+        public int Count
+        {
+            get { return _mainItem.Count; }
+            set { _mainItem.Count = value; OnPropertyChanged(); }
+        }
+        public MainItem MainItem
+        {
+            get { return _mainItem;  }
+        }
+        public HashSet<string> Matches 
+        { 
+            get { return _mainItem.Matches; }
+            set { _mainItem.Matches = value; }
+        }
+        public MainItemViewModel(MainItem item)
+        {
+            _mainItem = item;
         }
     }
 
-    public class Note
+    public class NoteViewModel : MyNotifyPropertyChanged
     {
-        public string Title { get; set; }
-        public string Date { get; set; }
-
-        public Note(string title, string date)
+        private readonly Note _note;
+        public string Title
         {
-            this.Title = title;
-            this.Date = date;
+            get { return _note.Title; }
+            set { _note.Title = value; OnPropertyChanged(); }
         }
-
+        public string Date
+        {
+            get { return _note.Date; }
+            set { _note.Date = value; OnPropertyChanged(); }
+        }
+        public Note Note { get { return _note; } }
+        public NoteViewModel(Note note)
+        {
+            this._note = note;
+        }
+        public override bool Equals(object? obj)
+        {
+            return obj is NoteViewModel noteViewModel && _note == noteViewModel.Note;
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 ﻿using ProgressTracker.Model;
 using ProgressTracker.ViewModel;
-
+using ProgressTracker.MVVM;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ namespace ProgressTracker.ViewModel
             this.date = note.Date;
             noteManager = new NoteManager();
             content = noteManager.GetContentByDate(note.Date);
-            NoteSaveCommand = new MainWindowViewModel.RelayCommand(_ => SaveNote());
+            NoteSaveCommand = new RelayCommand(_ => SaveNote());
         }
 
 

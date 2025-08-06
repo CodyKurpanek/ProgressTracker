@@ -9,6 +9,6 @@
     <StackPanel Orientation="Horizontal">
         <local:LinkButton Text="{Binding Date}" 
                Command="{Binding Command, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-        <TextBlock Padding="5,0,0,0" Text="{Binding Title}"/>
+        <TextBlock Padding="5,0,0,0" Text="{Binding Title}" TextWrapping="Wrap"/>
     </StackPanel>
 </UserControl>

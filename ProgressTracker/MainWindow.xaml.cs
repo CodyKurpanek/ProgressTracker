@@ -1,4 +1,5 @@
 ﻿using ProgressTracker.ViewModel;
+using ProgressTracker.Model;
 using ProgressTracker.View;
 using System.Text;
 using System.Windows;
@@ -18,20 +19,44 @@ namespace ProgressTracker
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainWindowViewModel vm;
+        private readonly List<NoteWindowViewModel> ChildNoteVMs = new();
+        
         public MainWindow()
         {
             InitializeComponent();
-            MainWindowViewModel vm = new();
+            vm = new MainWindowViewModel();
             this.DataContext = vm;
             vm.RequestOpenNote += (note) => OpenNote(note);
             
         }
 
-        public void OpenNote(Note note)
-        {                               
-            NoteWindow noteWindow = new NoteWindow(note);
-            noteWindow.Show();
+        private void NoteListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedNotes = NotesList.SelectedItems.Cast<NoteViewModel>().ToList();
+            vm.SelectedNotes = selectedNotes;
         }
 
+        public void OpenNote(Note note)
+        {
+            NoteWindowViewModel nwvm = new NoteWindowViewModel(note);
+            ChildNoteVMs.Add(nwvm);
+
+            NoteWindow noteWindow = new NoteWindow(note, nwvm);
+
+            // When wanting to 
+            noteWindow.MatchRequest += (matchNote, matchText) =>
+            {
+                vm.FindMatches(matchNote, matchText);
+            };
+            noteWindow.Closing += (sender, e) =>
+            {
+                ChildNoteVMs.Remove(nwvm);
+            };
+
+
+            noteWindow.Show();
+
+        }
     }
 }

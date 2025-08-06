@@ -24,5 +24,18 @@ namespace ProgressTracker.View.Controls
         {
             InitializeComponent();
         }
+
+        public static readonly DependencyProperty CommandProperty =
+            DependencyProperty.Register(
+            nameof(Command),
+            typeof(ICommand),
+            typeof(MainItemControl),
+            new PropertyMetadata(null));
+
+        public ICommand Command
+        {
+            get => (ICommand)GetValue(CommandProperty);
+            set => SetValue(CommandProperty, value);
+        }
     }
 }

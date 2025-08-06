@@ -1,25 +1,57 @@
-﻿using System;
+﻿using ProgressTracker.MVVM;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ProgressTracker.Model
 {
-    // This class holds and manages the notes within the list of notes
+    public class Note
+    {
+        public string Title { get; set; }
+        public string Date { get; set; }
+
+
+        public Note(string title, string date)
+        {
+            this.Title = title;
+            this.Date = date;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Note note && Date == note.Date;
+        }
+
+
+        public override int GetHashCode()
+        {
+            return Date.GetHashCode();
+        }
+
+    }
+
+
+    // This class manages utility functions for loading and saving Notes.
+    // It also handles 
     public class NoteManager
     {
+
+        // Keeps track of what notes are currently showing in the listbox
+        private HashSet<Note> openNotes;
         private readonly string noteBaseDirectory = "C:\\Users\\Public\\Documents\\ProgressTracker\\Notes\\";
         
 
         public NoteManager() 
-        { 
+        {             
             if (!Directory.Exists(noteBaseDirectory))
             {
                 Directory.CreateDirectory(noteBaseDirectory);
             }
+            openNotes = new HashSet<Note>();
         }
 
 
@@ -55,6 +87,62 @@ namespace ProgressTracker.Model
             File.WriteAllText(filepath, rtfContent);
         }
 
+
+
+        public bool CanAddNote(Note note)
+        {
+            
+            if (openNotes.Contains(note))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+        // Updates the note inplace if it exists, otherwise return the note to be added.
+        public Note UpdateNote(string date, string text)
+        {
+            Note note = new Note("Mentions: " + text, date);
+            var existingNote = openNotes.FirstOrDefault(n => n.Equals(note));
+            if (existingNote != null)
+            {
+                if (existingNote.Title == "")
+                {
+                    existingNote.Title = "Mentions: " + text;
+                }
+                else if(!existingNote.Title.Contains(text))
+                {
+                    existingNote.Title = existingNote.Title + ", " + text;
+                }
+                return null;
+            }
+            else
+            {
+                return note;
+            }
+        }
+
+
+        // Update the Model as notes are added to the viewmodel
+        public void OnAddNote(Note note)
+        {
+            openNotes.Add(note);
+
+        }
+        // Update the Model as notes are added to the viewmodel
+        public void OnRemoveNote(Note note)
+        {
+            openNotes.Remove(note);
+        }
+
+
+
+
+
         private string FilepathToDate(string filepath)
         {
             return Path.GetFileName(filepath);
@@ -63,7 +151,6 @@ namespace ProgressTracker.Model
         {
             return (Path.Combine(noteBaseDirectory, $"{dateString}.rtf"));
         }
-        
 
     }
 

@@ -25,23 +25,23 @@ namespace ProgressTracker.View
     public partial class NoteWindow : Window
     {
         public NoteWindowViewModel nwvm;
+        // this event comes from Note Window, as it does not have access
+        // to the list of MainItems. Params: Note and the note's plain text.
+        public event Action<Note, string>? MatchRequest;
+        public Note ThisNote;
 
-        public NoteWindow(Note note)
+        public NoteWindow(Note note, NoteWindowViewModel nwvm)
         {
             InitializeComponent();
-            nwvm = new NoteWindowViewModel(note);
-            this.DataContext = nwvm;
+            ThisNote = note;
+            this.nwvm = nwvm;
+            this.Title = $"Note - {note.Date}";
 
-            var textRange = new TextRange(NoteText.Document.ContentStart, NoteText.Document.ContentEnd);
-
-            // Load the nwvm.content into the note.
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(nwvm.content)))
-            {
-                var range = new TextRange(NoteText.Document.ContentStart, NoteText.Document.ContentEnd);
-                range.Load(stream, DataFormats.Rtf);
-            }
+            Utils.Rtf.LoadRichTextBox(NoteText, nwvm.content);
             this.Closing += CloseWindow;
         }
+
+
 
         private void CloseWindow(object? sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -55,14 +55,13 @@ namespace ProgressTracker.View
 
         private void SaveFile()
         {
-            var vm = (NoteWindowViewModel)DataContext;
 
-            var range = new TextRange(NoteText.Document.ContentStart, NoteText.Document.ContentEnd);
-            using var stream = new MemoryStream();
-            range.Save(stream, DataFormats.Rtf);
-            vm.content = Encoding.UTF8.GetString(stream.ToArray());
+            nwvm.content = Utils.Rtf.GetRtf(NoteText);
+            //save contents to file
+            nwvm.NoteSaveCommand.Execute(null);
 
-            vm.NoteSaveCommand.Execute(null); // Now saves the content
+            string plainText = Utils.Rtf.GetPlainText(NoteText);
+            MatchRequest?.Invoke(ThisNote, plainText);
         }
 
 

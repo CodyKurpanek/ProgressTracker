@@ -21,22 +21,24 @@ namespace ProgressTracker.View.Controls
     public partial class NotesControl : UserControl
     {
 
-public static readonly DependencyProperty CommandProperty =
-    DependencyProperty.Register(
-        nameof(Command),
-        typeof(ICommand),
-        typeof(NotesControl),
-        new PropertyMetadata(null));
-
-public ICommand Command
-{
-    get => (ICommand)GetValue(CommandProperty);
-    set => SetValue(CommandProperty, value);
-}
-
         public NotesControl()
         {
             InitializeComponent();
         }
+
+        public static readonly DependencyProperty CommandProperty =
+            DependencyProperty.Register(
+            nameof(Command),
+            typeof(ICommand),
+            typeof(NotesControl),
+            new PropertyMetadata(null));
+
+        public ICommand Command
+        {
+            get => (ICommand)GetValue(CommandProperty);
+            set => SetValue(CommandProperty, value);
+        }
+
+
     }
 }
